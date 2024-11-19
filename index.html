@@ -25,9 +25,9 @@
             width: 100%;
         }
 
-        h2 {
-            color: #333;
+        h2, h3 {
             text-align: center;
+            color: #333;
         }
 
         label {
@@ -54,16 +54,11 @@
             color: white;
             font-size: 16px;
             cursor: pointer;
+            margin-bottom: 10px;
         }
 
         button:hover {
             background-color: #0056b3;
-        }
-
-        h3 {
-            color: #333;
-            text-align: center;
-            margin-top: 20px;
         }
 
         p#result {
@@ -78,104 +73,110 @@
 <body>
     <div class="container">
         <h2>Rebalance Portfolio Ratio</h2>
-        <p>Enter the amounts for sections A, B, C, and D:</p>
-        <label for="amountA">Amount in section A:</label>
-        <input type="number" id="amountA" name="amountA" />
+        <p>Enter amounts and ratios for sections:</p>
+
+        <div id="inputs"></div>
         
-        <label for="amountB">Amount in section B:</label>
-        <input type="number" id="amountB" name="amountB" />
-
-        <label for="amountC">Amount in section C:</label>
-        <input type="number" id="amountC" name="amountC" />
-
-        <label for="amountD">Amount in section D:</label>
-        <input type="number" id="amountD" name="amountD" />
-
-        <p>Enter the ratios (for sections A, B, C, and D):</p>
-        <label for="ratioA">Ratio for A:</label>
-        <input type="number" id="ratioA" name="ratioA" value="2" />
-        
-        <label for="ratioB">Ratio for B:</label>
-        <input type="number" id="ratioB" name="ratioB" value="1" />
-
-        <label for="ratioC">Ratio for C:</label>
-        <input type="number" id="ratioC" name="ratioC" value="0" />
-
-        <label for="ratioD">Ratio for D:</label>
-        <input type="number" id="ratioD" name="ratioD" value="0" />
-
-        <button onclick="calculateSplit()">Calculate</button>
+        <button onclick="addSection()">Add Section</button>
+        <button onclick="calculateRebalance()">Calculate</button>
 
         <h3>Results:</h3>
         <p id="result"></p>
     </div>
 
     <script>
-        function calculateSplit() {
-            // Retrieve values from inputs
-            let amountA = parseFloat(document.getElementById("amountA").value) || 0;
-            let amountB = parseFloat(document.getElementById("amountB").value) || 0;
-            let amountC = parseFloat(document.getElementById("amountC").value) || 0;
-            let amountD = parseFloat(document.getElementById("amountD").value) || 0;
+        let sections = ['A', 'B', 'C', 'D'];
+        const defaultRatios = { A: 2, B: 1 }; // Default ratios for sections A and B
 
-            let ratioA = parseFloat(document.getElementById("ratioA").value) || 0;
-            let ratioB = parseFloat(document.getElementById("ratioB").value) || 0;
-            let ratioC = parseFloat(document.getElementById("ratioC").value) || 0;
-            let ratioD = parseFloat(document.getElementById("ratioD").value) || 0;
+        // Dynamically generate inputs for amounts and ratios
+        const generateInputs = () => {
+            const container = document.getElementById('inputs');
+            container.innerHTML = ''; // Clear previous inputs
+            sections.forEach(section => {
+                const defaultRatio = defaultRatios[section] || 0; // Use default ratio if defined, otherwise 0
+                container.innerHTML += `
+                    <label for="amount${section}">Amount in section ${section}:</label>
+                    <input type="number" id="amount${section}" name="amount${section}" />
+                    
+                    <label for="ratio${section}">Ratio for ${section}:</label>
+                    <input type="number" id="ratio${section}" name="ratio${section}" value="${defaultRatio}" />
+                `;
+            });
+        };
 
-            // Check if at least one ratio is entered
-            let totalRatio = ratioA + ratioB + ratioC + ratioD;
+        // Add a new section
+        const addSection = () => {
+            const lastSection = sections[sections.length - 1];
+            const nextSection = String.fromCharCode(lastSection.charCodeAt(0) + 1); // Next letter
+            sections.push(nextSection);
+            generateInputs(); // Re-render inputs
+        };
+
+        // Calculate rebalance logic
+        const calculateRebalance = () => {
+            const amounts = getValues('amount');
+            const ratios = getValues('ratio');
+
+            const totalRatio = ratios.reduce((sum, ratio) => sum + ratio, 0);
             if (totalRatio === 0) {
-                document.getElementById("result").textContent = "Please enter at least one ratio.";
+                displayResult('Please enter at least one ratio.');
                 return;
             }
 
-            // Calculate the total amount
-            let totalAmount = amountA + amountB + amountC + amountD;
+            const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0);
+            const targets = calculateTargets(totalAmount, ratios, totalRatio);
 
-            // Calculate the target amounts
-            let targetA = (ratioA / totalRatio) * totalAmount;
-            let targetB = (ratioB / totalRatio) * totalAmount;
-            let targetC = (ratioC / totalRatio) * totalAmount;
-            let targetD = (ratioD / totalRatio) * totalAmount;
+            const adjustments = calculateAdjustments(amounts, targets);
+            displayResult(formatResults(targets, adjustments));
+        };
 
-            // Calculate differences
-            let differences = [
-                { part: 'A', amount: amountA - targetA },
-                { part: 'B', amount: amountB - targetB },
-                { part: 'C', amount: amountC - targetC },
-                { part: 'D', amount: amountD - targetD }
-            ];
+        // Get values for amounts or ratios
+        const getValues = (type) => sections.map(section => parseFloat(document.getElementById(`${type}${section}`).value) || 0);
 
-            // Separate excess and deficit amounts
-            let excesses = differences.filter(d => d.amount > 0);
-            let deficits = differences.filter(d => d.amount < 0);
+        // Calculate target amounts for each section
+        const calculateTargets = (totalAmount, ratios, totalRatio) => ratios.map(ratio => (ratio / totalRatio) * totalAmount);
 
-            let result = '';
+        // Calculate differences and adjust accordingly
+        const calculateAdjustments = (amounts, targets) => {
+            const differences = sections.map((section, index) => ({
+                section,
+                difference: amounts[index] - targets[index],
+            }));
 
-            // Transfer money from excess to deficit
-            for (let deficit of deficits) {
-                for (let excess of excesses) {
-                    let transferAmount = Math.min(-deficit.amount, excess.amount);
+            const excesses = differences.filter(d => d.difference > 0);
+            const deficits = differences.filter(d => d.difference < 0);
+
+            let adjustments = [];
+
+            deficits.forEach(deficit => {
+                excesses.forEach(excess => {
+                    if (deficit.difference === 0) return;
+
+                    const transferAmount = Math.min(-deficit.difference, excess.difference);
                     if (transferAmount > 0) {
-                        result += `Transfer ${transferAmount.toFixed(2)} from ${excess.part} to ${deficit.part}\n`;
+                        adjustments.push(`Transfer ${transferAmount.toFixed(2)} from ${excess.section} to ${deficit.section}`);
+                        deficit.difference += transferAmount;
+                        excess.difference -= transferAmount;
                     }
-                    deficit.amount += transferAmount;
-                    excess.amount -= transferAmount;
-                    if (deficit.amount >= 0) break;
-                }
-            }
+                });
+            });
 
-            // Final results summary
-            if (result === '') {
-                result = "No transfers needed.\n";
-            }
+            return adjustments.length ? adjustments : ['No transfers needed.'];
+        };
 
-            result += `\nFinal balances:\nA: ${targetA.toFixed(2)}\nB: ${targetB.toFixed(2)}\nC: ${targetC.toFixed(2)}\nD: ${targetD.toFixed(2)}`;
+        // Format results for display
+        const formatResults = (targets, adjustments) => {
+            const targetsText = sections.map((section, index) => `${section}: ${targets[index].toFixed(2)}`).join('\n');
+            return `${adjustments.join('\n')}\n\nFinal targets:\n${targetsText}`;
+        };
 
-            // Display results
-            document.getElementById("result").textContent = result;
-        }
+        // Display results in the result paragraph
+        const displayResult = (text) => {
+            document.getElementById('result').textContent = text;
+        };
+
+        // Initialize inputs on page load
+        generateInputs();
     </script>
 </body>
 </html>
