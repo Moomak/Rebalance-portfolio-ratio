@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rebalance portfolio ratio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h3 {
+            color: #333;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        p#result {
+            font-size: 18px;
+            text-align: center;
+            color: #007bff;
+            font-weight: bold;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>แบ่งเงินตามสัดส่วน</h2>
+        <p>กรอกจำนวนเงินในส่วน A, B, C และ D:</p>
+        <label for="amountA">จำนวนเงินในส่วน A:</label>
+        <input type="number" id="amountA" name="amountA" />
+        
+        <label for="amountB">จำนวนเงินในส่วน B:</label>
+        <input type="number" id="amountB" name="amountB" />
+
+        <label for="amountC">จำนวนเงินในส่วน C:</label>
+        <input type="number" id="amountC" name="amountC" />
+
+        <label for="amountD">จำนวนเงินในส่วน D:</label>
+        <input type="number" id="amountD" name="amountD" />
+
+        <p>กรอกอัตราส่วน (ส่วน A, B, C และ D):</p>
+        <label for="ratioA">อัตราส่วนของ A:</label>
+        <input type="number" id="ratioA" name="ratioA" value="2" />
+        
+        <label for="ratioB">อัตราส่วนของ B:</label>
+        <input type="number" id="ratioB" name="ratioB" value="1" />
+
+        <label for="ratioC">อัตราส่วนของ C:</label>
+        <input type="number" id="ratioC" name="ratioC" value="0" />
+
+        <label for="ratioD">อัตราส่วนของ D:</label>
+        <input type="number" id="ratioD" name="ratioD" value="0" />
+
+        <button onclick="calculateSplit()">คำนวณ</button>
+
+        <h3>ผลลัพธ์:</h3>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        function calculateSplit() {
+            // รับค่าจาก input
+            let amountA = parseFloat(document.getElementById("amountA").value) || 0;
+            let amountB = parseFloat(document.getElementById("amountB").value) || 0;
+            let amountC = parseFloat(document.getElementById("amountC").value) || 0;
+            let amountD = parseFloat(document.getElementById("amountD").value) || 0;
+
+            let ratioA = parseFloat(document.getElementById("ratioA").value) || 0;
+            let ratioB = parseFloat(document.getElementById("ratioB").value) || 0;
+            let ratioC = parseFloat(document.getElementById("ratioC").value) || 0;
+            let ratioD = parseFloat(document.getElementById("ratioD").value) || 0;
+
+            // ตรวจสอบว่าอัตราส่วนที่ไม่ได้ใส่หรือเป็น 0 จะไม่นำมาคำนวณ
+            let totalRatio = ratioA + ratioB + ratioC + ratioD;
+            if (totalRatio === 0) {
+                document.getElementById("result").textContent = "กรุณากรอกอัตราส่วนอย่างน้อยหนึ่งตัว";
+                return;
+            }
+
+            // รวมจำนวนเงินทั้งหมด
+            let totalAmount = amountA + amountB + amountC + amountD;
+
+            // คำนวณสัดส่วนที่ควรเป็น
+            let targetA = (ratioA / totalRatio) * totalAmount;
+            let targetB = (ratioB / totalRatio) * totalAmount;
+            let targetC = (ratioC / totalRatio) * totalAmount;
+            let targetD = (ratioD / totalRatio) * totalAmount;
+
+            // คำนวณความแตกต่าง
+            let differences = [
+                { part: 'A', amount: amountA - targetA },
+                { part: 'B', amount: amountB - targetB },
+                { part: 'C', amount: amountC - targetC },
+                { part: 'D', amount: amountD - targetD }
+            ];
+
+            // แยกส่วนที่เกินและส่วนที่ขาด
+            let excesses = differences.filter(d => d.amount > 0);
+            let deficits = differences.filter(d => d.amount < 0);
+
+            let result = '';
+
+            // โยกย้ายเงินจากส่วนที่เกินไปยังส่วนที่ขาด
+            for (let deficit of deficits) {
+                for (let excess of excesses) {
+                    let transferAmount = Math.min(-deficit.amount, excess.amount);
+                    if (transferAmount > 0) {
+                        result += `ย้าย ${transferAmount.toFixed(2)} จากส่วน ${excess.part} ไปยังส่วน ${deficit.part}\n`;
+                    }
+                    deficit.amount += transferAmount;
+                    excess.amount -= transferAmount;
+                    if (deficit.amount >= 0) break;
+                }
+            }
+
+            // อัปเดตจำนวนเงินในแต่ละส่วนหลังการโยกย้าย
+            let remainingA = targetA;
+            let remainingB = targetB;
+            let remainingC = targetC;
+            let remainingD = targetD;
+
+            // แสดงผลลัพธ์รวม
+            if (result === '') {
+                result = "ไม่มีความจำเป็นต้องโยกย้ายเงิน\n";
+            }
+            
+            result += `\nสรุปหลังจากการโยกย้าย:\nส่วน A เหลือ ${remainingA.toFixed(2)}\nส่วน B เหลือ ${remainingB.toFixed(2)}\nส่วน C เหลือ ${remainingC.toFixed(2)}\nส่วน D เหลือ ${remainingD.toFixed(2)}`;
+
+            // แสดงผลลัพธ์
+            document.getElementById("result").textContent = result;
+        }
+    </script>
+</body>
+</html>
