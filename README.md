@@ -18,7 +18,7 @@ Check out the live demo: [Rebalance Portfolio Ratio](https://holy-incandescent-t
 1. Open the demo link or clone this repository to use locally.
 2. Enter the current amounts for portions A, B, C, and D.
 3. Set the desired ratios for each portion.
-4. Click the **"คำนวณ" (Calculate)** button to see:
+4. Click the **Calculate** button to see:
    - Suggested transfers to balance portions.
    - Final balances after redistribution.
 

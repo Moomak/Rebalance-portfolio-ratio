@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rebalance portfolio ratio</title>
+    <title>Rebalance Portfolio Ratio</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -77,42 +77,42 @@
 </head>
 <body>
     <div class="container">
-        <h2>แบ่งเงินตามสัดส่วน</h2>
-        <p>กรอกจำนวนเงินในส่วน A, B, C และ D:</p>
-        <label for="amountA">จำนวนเงินในส่วน A:</label>
+        <h2>Rebalance Portfolio Ratio</h2>
+        <p>Enter the amounts for sections A, B, C, and D:</p>
+        <label for="amountA">Amount in section A:</label>
         <input type="number" id="amountA" name="amountA" />
         
-        <label for="amountB">จำนวนเงินในส่วน B:</label>
+        <label for="amountB">Amount in section B:</label>
         <input type="number" id="amountB" name="amountB" />
 
-        <label for="amountC">จำนวนเงินในส่วน C:</label>
+        <label for="amountC">Amount in section C:</label>
         <input type="number" id="amountC" name="amountC" />
 
-        <label for="amountD">จำนวนเงินในส่วน D:</label>
+        <label for="amountD">Amount in section D:</label>
         <input type="number" id="amountD" name="amountD" />
 
-        <p>กรอกอัตราส่วน (ส่วน A, B, C และ D):</p>
-        <label for="ratioA">อัตราส่วนของ A:</label>
+        <p>Enter the ratios (for sections A, B, C, and D):</p>
+        <label for="ratioA">Ratio for A:</label>
         <input type="number" id="ratioA" name="ratioA" value="2" />
         
-        <label for="ratioB">อัตราส่วนของ B:</label>
+        <label for="ratioB">Ratio for B:</label>
         <input type="number" id="ratioB" name="ratioB" value="1" />
 
-        <label for="ratioC">อัตราส่วนของ C:</label>
+        <label for="ratioC">Ratio for C:</label>
         <input type="number" id="ratioC" name="ratioC" value="0" />
 
-        <label for="ratioD">อัตราส่วนของ D:</label>
+        <label for="ratioD">Ratio for D:</label>
         <input type="number" id="ratioD" name="ratioD" value="0" />
 
-        <button onclick="calculateSplit()">คำนวณ</button>
+        <button onclick="calculateSplit()">Calculate</button>
 
-        <h3>ผลลัพธ์:</h3>
+        <h3>Results:</h3>
         <p id="result"></p>
     </div>
 
     <script>
         function calculateSplit() {
-            // รับค่าจาก input
+            // Retrieve values from inputs
             let amountA = parseFloat(document.getElementById("amountA").value) || 0;
             let amountB = parseFloat(document.getElementById("amountB").value) || 0;
             let amountC = parseFloat(document.getElementById("amountC").value) || 0;
@@ -123,23 +123,23 @@
             let ratioC = parseFloat(document.getElementById("ratioC").value) || 0;
             let ratioD = parseFloat(document.getElementById("ratioD").value) || 0;
 
-            // ตรวจสอบว่าอัตราส่วนที่ไม่ได้ใส่หรือเป็น 0 จะไม่นำมาคำนวณ
+            // Check if at least one ratio is entered
             let totalRatio = ratioA + ratioB + ratioC + ratioD;
             if (totalRatio === 0) {
-                document.getElementById("result").textContent = "กรุณากรอกอัตราส่วนอย่างน้อยหนึ่งตัว";
+                document.getElementById("result").textContent = "Please enter at least one ratio.";
                 return;
             }
 
-            // รวมจำนวนเงินทั้งหมด
+            // Calculate the total amount
             let totalAmount = amountA + amountB + amountC + amountD;
 
-            // คำนวณสัดส่วนที่ควรเป็น
+            // Calculate the target amounts
             let targetA = (ratioA / totalRatio) * totalAmount;
             let targetB = (ratioB / totalRatio) * totalAmount;
             let targetC = (ratioC / totalRatio) * totalAmount;
             let targetD = (ratioD / totalRatio) * totalAmount;
 
-            // คำนวณความแตกต่าง
+            // Calculate differences
             let differences = [
                 { part: 'A', amount: amountA - targetA },
                 { part: 'B', amount: amountB - targetB },
@@ -147,18 +147,18 @@
                 { part: 'D', amount: amountD - targetD }
             ];
 
-            // แยกส่วนที่เกินและส่วนที่ขาด
+            // Separate excess and deficit amounts
             let excesses = differences.filter(d => d.amount > 0);
             let deficits = differences.filter(d => d.amount < 0);
 
             let result = '';
 
-            // โยกย้ายเงินจากส่วนที่เกินไปยังส่วนที่ขาด
+            // Transfer money from excess to deficit
             for (let deficit of deficits) {
                 for (let excess of excesses) {
                     let transferAmount = Math.min(-deficit.amount, excess.amount);
                     if (transferAmount > 0) {
-                        result += `ย้าย ${transferAmount.toFixed(2)} จากส่วน ${excess.part} ไปยังส่วน ${deficit.part}\n`;
+                        result += `Transfer ${transferAmount.toFixed(2)} from ${excess.part} to ${deficit.part}\n`;
                     }
                     deficit.amount += transferAmount;
                     excess.amount -= transferAmount;
@@ -166,20 +166,14 @@
                 }
             }
 
-            // อัปเดตจำนวนเงินในแต่ละส่วนหลังการโยกย้าย
-            let remainingA = targetA;
-            let remainingB = targetB;
-            let remainingC = targetC;
-            let remainingD = targetD;
-
-            // แสดงผลลัพธ์รวม
+            // Final results summary
             if (result === '') {
-                result = "ไม่มีความจำเป็นต้องโยกย้ายเงิน\n";
+                result = "No transfers needed.\n";
             }
-            
-            result += `\nสรุปหลังจากการโยกย้าย:\nส่วน A เหลือ ${remainingA.toFixed(2)}\nส่วน B เหลือ ${remainingB.toFixed(2)}\nส่วน C เหลือ ${remainingC.toFixed(2)}\nส่วน D เหลือ ${remainingD.toFixed(2)}`;
 
-            // แสดงผลลัพธ์
+            result += `\nFinal balances:\nA: ${targetA.toFixed(2)}\nB: ${targetB.toFixed(2)}\nC: ${targetC.toFixed(2)}\nD: ${targetD.toFixed(2)}`;
+
+            // Display results
             document.getElementById("result").textContent = result;
         }
     </script>
